@@ -46,3 +46,8 @@ Or
 ```
 ./gradlew sourcesJar javadocJar
 ```
+
+## Credits
+- [chrisbanes/gradle-mvn-push](https://github.com/chrisbanes/gradle-mvn-push)
+- [square/leakcanary](https://github.com/square/leakcanary/blob/master/gradle/gradle-mvn-push.gradle)
+- [JakeWharton/timber](https://github.com/JakeWharton/timber/blob/master/gradle/gradle-mvn-push.gradle)
