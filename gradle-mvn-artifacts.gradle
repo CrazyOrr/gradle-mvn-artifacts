@@ -1,0 +1,70 @@
+def plugins = project.getPlugins()
+if (plugins.hasPlugin('com.android.application') || plugins.hasPlugin('com.android.library')) {
+    // for Android
+    tasks.register('sourcesJar', Jar) {
+        archiveClassifier.set('sources')
+        from plugins.hasPlugin('kotlin-android') ?
+                android.sourceSets.main.java.srcDirs // all files
+                : android.sourceSets.main.java.sourceFiles // only .java files
+    }
+
+    if (plugins.hasPlugin('org.jetbrains.dokka')) {
+        // use Dokka for javadoc
+        tasks.register('dokkaJavadoc', dokka.class) {
+            outputFormat = 'javadoc'
+            outputDirectory = "$buildDir/doc/javadoc"
+        }
+
+        tasks.register('javadocJar', Jar) {
+            dependsOn dokkaJavadoc
+            archiveClassifier.set('javadoc')
+            from dokkaJavadoc.outputDirectory
+        }
+    } else {
+        // javadoc
+        tasks.register('androidJavadoc', Javadoc) {
+            source = android.sourceSets.main.java.srcDirs
+            exclude "**/*.kt"
+            exclude "**/internal/**"
+            classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
+            def utf8 = 'UTF-8'
+            options {
+                encoding utf8
+//                docEncoding utf8
+                charSet utf8
+            }
+        }
+        afterEvaluate {
+            // Append also the classpath and files for release library variants.
+            // This fixes the javadoc warnings.
+            // Copy pasta from https://github.com/novoda/bintray-release/pull/39/files
+            android.libraryVariants.each { variant ->
+                if (variant.buildType.name == "release") {
+                    tasks.named('androidJavadoc') {
+                        classpath += variant.javaCompileProvider.get().classpath
+//                        classpath += variant.javaCompile.outputs.files
+                    }
+                }
+            }
+        }
+
+        tasks.register('javadocJar', Jar) {
+            dependsOn androidJavadoc
+            archiveClassifier.set('javadoc')
+            from androidJavadoc.destinationDir
+        }
+    }
+} else {
+    // for Java
+    tasks.register('sourcesJar', Jar) {
+        dependsOn tasks.named("classes")
+        archiveClassifier.set('sources')
+        from sourceSets.main.allSource
+    }
+
+    tasks.register('javadocJar', Jar) {
+        dependsOn javadoc
+        archiveClassifier.set('javadoc')
+        from javadoc.destinationDir
+    }
+}
