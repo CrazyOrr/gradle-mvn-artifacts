@@ -41,8 +41,9 @@ if (plugins.hasPlugin('com.android.application') || plugins.hasPlugin('com.andro
             android.libraryVariants.each { variant ->
                 if (variant.buildType.name == "release") {
                     tasks.named('androidJavadoc') {
-                        classpath += variant.javaCompileProvider.get().classpath
-//                        classpath += variant.javaCompile.outputs.files
+                        def javaCompile = variant.javaCompileProvider.get()
+                        classpath += javaCompile.classpath // add dependencies
+                        classpath += javaCompile.outputs.files // add output files so we can exclude classes of this library in the Javadoc task
                     }
                 }
             }
